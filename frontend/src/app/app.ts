@@ -1,11 +1,9 @@
-import { Component, signal, computed, inject, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, inject, ChangeDetectionStrategy } from '@angular/core';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatTabsModule } from '@angular/material/tabs';
 import { TrackerComponent } from './features/tracker/tracker.component';
-import { PredictorComponent } from './features/predictor/predictor.component';
 import { StorageService } from './core/services/storage.service';
 import { ConfirmDialogComponent } from './shared/components/confirm-dialog/confirm-dialog.component';
 
@@ -16,9 +14,7 @@ import { ConfirmDialogComponent } from './shared/components/confirm-dialog/confi
     MatButtonModule,
     MatIconModule,
     MatDialogModule,
-    MatTabsModule,
-    TrackerComponent,
-    PredictorComponent
+    TrackerComponent
   ],
   templateUrl: './app.html',
   styleUrl: './app.scss',
@@ -34,21 +30,10 @@ export class App {
     return this.lobby().currentLobby !== null;
   });
 
-  protected readonly isLobbyComplete = computed(() => {
-    return this.lobby().currentLobby?.isComplete ?? false;
-  });
-
-  protected readonly selectedTab = signal<number>(0);
-
   constructor() {
     // Initialize lobby if none exists
     if (!this.hasLobby()) {
       this.storageService.createNewLobby();
-    }
-
-    // Auto-switch to predictor tab when lobby is complete
-    if (this.isLobbyComplete()) {
-      this.selectedTab.set(1);
     }
   }
 
@@ -67,13 +52,8 @@ export class App {
       if (confirmed) {
         this.storageService.resetLobby();
         this.storageService.createNewLobby();
-        this.selectedTab.set(0);
       }
     });
-  }
-
-  onTabChange(index: number): void {
-    this.selectedTab.set(index);
   }
 }
 

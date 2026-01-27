@@ -23,10 +23,11 @@ export class StorageService {
     return this.state;
   }
 
-  createNewLobby(): void {
+  createNewLobby(playerName: string = 'Player'): void {
     const newLobby: Lobby = {
       id: crypto.randomUUID(),
       createdAt: new Date(),
+      playerName: playerName.trim(),
       opponents: [],
       currentMatch: 1,
       isComplete: false
@@ -49,7 +50,11 @@ export class StorageService {
     const opponent: Opponent = {
       id: crypto.randomUUID(),
       name: name.trim(),
-      isDead: false
+      isDead: false,
+      matchResults: [],
+      killCount: 0,
+      killedBy: null,
+      eliminatedAtMatch: null
     };
 
     const updatedLobby = {
@@ -101,7 +106,12 @@ export class StorageService {
 
   advanceMatch(): void {
     const lobby = this.state().currentLobby;
-    if (!lobby || !lobby.isComplete) {
+    if (!lobby) {
+      return;
+    }
+
+    // Can advance after all 7 opponents are recorded
+    if (lobby.opponents.length < 7) {
       return;
     }
 
@@ -109,7 +119,8 @@ export class StorageService {
       ...state,
       currentLobby: {
         ...lobby,
-        currentMatch: lobby.currentMatch + 1
+        currentMatch: lobby.currentMatch + 1,
+        isComplete: lobby.opponents.length === 7
       }
     }));
 
@@ -125,6 +136,95 @@ export class StorageService {
     this.saveState();
   }
 
+  recordMatchOutcome(opponentId: string, outcome: 'win' | 'loss', matchNumber: number): void {
+    const lobby = this.state().currentLobby;
+    if (!lobby) {
+      return;
+    }
+
+    const updatedOpponents = lobby.opponents.map(opp => {
+      if (opp.id === opponentId) {
+        const matchResults = opp.matchResults || [];
+        return {
+          ...opp,
+          matchResults: [
+            ...matchResults,
+            {
+              matchNumber,
+              outcome,
+              timestamp: new Date()
+            }
+          ]
+        };
+      }
+      return opp;
+    });
+
+    this.state.update(state => ({
+      ...state,
+      currentLobby: {
+        ...lobby,
+        opponents: updatedOpponents
+      }
+    }));
+
+    this.saveState();
+  }
+
+  recordElimination(opponentId: string, killedById: string | null, matchNumber: number): void {
+    const lobby = this.state().currentLobby;
+    if (!lobby) {
+      return;
+    }
+
+    const updatedOpponents = lobby.opponents.map(opp => {
+      // Update the eliminated opponent
+      if (opp.id === opponentId) {
+        return {
+          ...opp,
+          isDead: true,
+          killedBy: killedById,
+          eliminatedAtMatch: matchNumber
+        };
+      }
+      // Increment kill count for the killer
+      if (killedById && opp.id === killedById) {
+        return {
+          ...opp,
+          killCount: (opp.killCount || 0) + 1
+        };
+      }
+      return opp;
+    });
+
+    this.state.update(state => ({
+      ...state,
+      currentLobby: {
+        ...lobby,
+        opponents: updatedOpponents
+      }
+    }));
+
+    this.saveState();
+  }
+
+  updatePlayerName(playerName: string): void {
+    const lobby = this.state().currentLobby;
+    if (!lobby) {
+      return;
+    }
+
+    this.state.update(state => ({
+      ...state,
+      currentLobby: {
+        ...lobby,
+        playerName: playerName.trim()
+      }
+    }));
+
+    this.saveState();
+  }
+
   private loadState(): LobbyState {
     try {
       const stored = localStorage.getItem(this.STORAGE_KEY);
@@ -133,6 +233,14 @@ export class StorageService {
         // Restore Date objects
         if (parsed.currentLobby) {
           parsed.currentLobby.createdAt = new Date(parsed.currentLobby.createdAt);
+          // Restore MatchResult timestamps
+          parsed.currentLobby.opponents = parsed.currentLobby.opponents.map(opp => ({
+            ...opp,
+            matchResults: (opp.matchResults || []).map(result => ({
+              ...result,
+              timestamp: new Date(result.timestamp)
+            }))
+          }));
         }
         return parsed;
       }

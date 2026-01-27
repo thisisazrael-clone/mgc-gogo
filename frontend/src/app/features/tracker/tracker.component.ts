@@ -1,15 +1,22 @@
-import { Component, computed, inject, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, computed, inject, signal, ChangeDetectionStrategy, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
-import { MatStepperModule } from '@angular/material/stepper';
 import { MatCardModule } from '@angular/material/card';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatDialog } from '@angular/material/dialog';
 import { StorageService } from '../../core/services/storage.service';
 import { AutocompleteService } from '../../core/services/autocomplete.service';
+import { predictOpponent } from '../../core/utils/prediction.util';
+import { 
+  FightAnimationDialogComponent, 
+  FightAnimationDialogData, 
+  FightAnimationDialogResult 
+} from '../../shared/components/fight-animation-dialog/fight-animation-dialog.component';
 
 @Component({
   selector: 'app-tracker',
@@ -19,11 +26,10 @@ import { AutocompleteService } from '../../core/services/autocomplete.service';
     MatFormFieldModule,
     MatInputModule,
     MatAutocompleteModule,
-    MatStepperModule,
     MatCardModule,
-    MatSlideToggleModule,
     MatButtonModule,
-    MatIconModule
+    MatIconModule,
+    MatChipsModule
   ],
   templateUrl: './tracker.component.html',
   styleUrl: './tracker.component.scss',
@@ -32,16 +38,14 @@ import { AutocompleteService } from '../../core/services/autocomplete.service';
 export class TrackerComponent {
   private readonly storageService = inject(StorageService);
   private readonly autocompleteService = inject(AutocompleteService);
+  private readonly dialog = inject(MatDialog);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly opponentName = signal<string>('');
+  protected readonly pendingElimination = signal<string | null>(null);
   protected readonly lobby = this.storageService.getLobbySignal();
   protected readonly suggestions = this.autocompleteService.suggestions;
   
-  protected readonly isComplete = computed(() => {
-    const currentLobby = this.lobby().currentLobby;
-    return currentLobby?.isComplete ?? false;
-  });
-
   protected readonly currentMatchNumber = computed(() => {
     const currentLobby = this.lobby().currentLobby;
     return currentLobby?.currentMatch ?? 1;
@@ -50,6 +54,45 @@ export class TrackerComponent {
   protected readonly opponents = computed(() => {
     const currentLobby = this.lobby().currentLobby;
     return currentLobby?.opponents ?? [];
+  });
+
+  protected readonly playerName = computed(() => {
+    return this.lobby().currentLobby?.playerName || 'Player';
+  });
+
+  protected readonly totalWins = computed(() => {
+    return this.opponents().reduce((total, opp) => {
+      const wins = (opp.matchResults || []).filter(r => r.outcome === 'win').length;
+      return total + wins;
+    }, 0);
+  });
+
+  protected readonly totalLosses = computed(() => {
+    return this.opponents().reduce((total, opp) => {
+      const losses = (opp.matchResults || []).filter(r => r.outcome === 'loss').length;
+      return total + losses;
+    }, 0);
+  });
+
+  protected readonly totalKills = computed(() => {
+    return this.opponents().reduce((total, opp) => {
+      return total + (opp.killCount || 0);
+    }, 0);
+  });
+
+  protected readonly aliveOpponentsCount = computed(() => {
+    return this.opponents().filter(opp => !opp.isDead).length;
+  });
+
+  protected readonly predictedOpponent = computed(() => {
+    const matchNum = this.currentMatchNumber();
+    const opps = this.opponents();
+    
+    if (matchNum <= 7 || opps.length < 7) {
+      return null;
+    }
+    
+    return predictOpponent(matchNum, opps);
   });
 
   protected readonly canAddOpponent = computed(() => {
@@ -65,8 +108,17 @@ export class TrackerComponent {
     return !existingOpponents.some(opp => opp.name.toLowerCase() === nameLower);
   });
 
-  protected readonly matches = computed(() => {
-    return Array.from({ length: 7 }, (_, i) => i + 1);
+  protected readonly canAdvanceMatch = computed(() => {
+    const matchNum = this.currentMatchNumber();
+    const opps = this.opponents();
+    
+    // During first 7 matches, must have recorded all opponents up to current match
+    if (matchNum <= 7) {
+      return opps.length === 7;
+    }
+    
+    // After match 7, can always advance
+    return true;
   });
 
   onInputChange(value: string): void {
@@ -82,18 +134,103 @@ export class TrackerComponent {
   addOpponent(): void {
     const name = this.opponentName().trim();
     if (name && this.canAddOpponent()) {
-      this.storageService.addOpponent(name);
-      this.opponentName.set('');
-      this.autocompleteService.clearFilter();
+      // Open fight dialog first
+      this.openFightDialog(name).then(result => {
+        if (result) {
+          // Add opponent after fight animation
+          this.storageService.addOpponent(name);
+          
+          // Find the newly added opponent
+          const addedOpponent = this.opponents().find(opp => opp.name === name);
+          if (addedOpponent) {
+            const matchNum = this.currentMatchNumber();
+            
+            // Record match outcome
+            this.storageService.recordMatchOutcome(addedOpponent.id, result.outcome, matchNum);
+            
+            // Record elimination if checked
+            if (result.eliminated) {
+              const currentLobby = this.lobby().currentLobby;
+              const playerId = currentLobby?.id; // Using lobby ID as player ID
+              this.storageService.recordElimination(addedOpponent.id, playerId || null, matchNum);
+            }
+          }
+          
+          this.opponentName.set('');
+          this.autocompleteService.clearFilter();
+        }
+      });
     }
   }
 
-  toggleOpponentStatus(opponentId: string, isDead: boolean): void {
-    this.storageService.updateOpponent(opponentId, { isDead });
+  nextMatch(): void {
+    const matchNum = this.currentMatchNumber();
+    const opps = this.opponents();
+    
+    // After match 7, open fight dialog for predicted opponent
+    if (matchNum >= 7 && opps.length === 7) {
+      const predicted = predictOpponent(matchNum, opps);
+      if (predicted) {
+        this.openFightDialog(predicted.name).then(result => {
+          if (result) {
+            // Record match outcome
+            this.storageService.recordMatchOutcome(predicted.id, result.outcome, matchNum);
+            
+            // Record elimination if checked
+            if (result.eliminated) {
+              const currentLobby = this.lobby().currentLobby;
+              const playerId = currentLobby?.id; // Using lobby ID as player ID
+              this.storageService.recordElimination(predicted.id, playerId || null, matchNum);
+            }
+            
+            // Advance to next match
+            this.storageService.advanceMatch();
+          }
+        });
+        return;
+      }
+    }
+    
+    // Advance to next match (for matches 1-7)
+    this.storageService.advanceMatch();
   }
 
-  getOpponentForMatch(matchNumber: number) {
-    const opponents = this.opponents();
-    return opponents[matchNumber - 1] || null;
+  confirmElimination(isDead: boolean): void {
+    const opponentId = this.pendingElimination();
+    if (opponentId) {
+      this.storageService.updateOpponent(opponentId, { isDead });
+      this.pendingElimination.set(null);
+      this.storageService.advanceMatch();
+    }
+  }
+
+  getOpponentById(id: string) {
+    return this.opponents().find(opp => opp.id === id);
+  }
+
+  updatePlayerName(name: string): void {
+    this.storageService.updatePlayerName(name);
+  }
+
+  private openFightDialog(opponentName: string): Promise<FightAnimationDialogResult | null> {
+    const dialogData: FightAnimationDialogData = {
+      playerName: this.playerName(),
+      opponentName,
+      matchNumber: this.currentMatchNumber()
+    };
+
+    const dialogRef = this.dialog.open(FightAnimationDialogComponent, {
+      width: '500px',
+      disableClose: true,
+      data: dialogData
+    });
+
+    return new Promise((resolve) => {
+      dialogRef.afterClosed()
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(result => {
+          resolve(result || null);
+        });
+    });
   }
 }
