@@ -1,0 +1,141 @@
+@use '../../styles/variables' as vars;
+@use '../../styles/mixins';
+
+.tracker {
+  padding: vars.$spacing-md;
+
+  @include mixins.md {
+    padding: vars.$spacing-lg;
+  }
+
+  &__header {
+    margin-bottom: vars.$spacing-lg;
+    text-align: center;
+  }
+
+  &__title {
+    margin: 0 0 vars.$spacing-sm;
+    font-size: 1.75rem;
+    font-weight: 500;
+    color: vars.$text-primary;
+
+    @include mixins.md {
+      font-size: 2rem;
+    }
+  }
+
+  &__subtitle {
+    margin: 0;
+    font-size: 1rem;
+    color: vars.$text-secondary;
+  }
+
+  &__input-section {
+    display: flex;
+    flex-direction: column;
+    gap: vars.$spacing-md;
+    margin-bottom: vars.$spacing-xl;
+    padding: vars.$spacing-lg;
+    background-color: #fff;
+    border-radius: vars.$border-radius-md;
+    @include mixins.elevation-1;
+
+    @include mixins.md {
+      flex-direction: row;
+      align-items: flex-start;
+    }
+  }
+
+  &__input-field {
+    flex: 1;
+    width: 100%;
+  }
+
+  &__add-button {
+    @include mixins.md {
+      margin-top: 8px;
+    }
+  }
+
+  &__stepper {
+    background-color: transparent;
+  }
+
+  &__step-content {
+    padding: vars.$spacing-md 0;
+  }
+
+  &__empty-step {
+    color: vars.$text-secondary;
+    font-style: italic;
+  }
+
+  &__complete-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: vars.$spacing-md;
+    margin-top: vars.$spacing-xl;
+    padding: vars.$spacing-lg;
+    background-color: #e8f5e9;
+    border-radius: vars.$border-radius-md;
+    text-align: center;
+  }
+
+  &__complete-icon {
+    color: vars.$success-color;
+    font-size: 3rem;
+    width: 3rem;
+    height: 3rem;
+  }
+}
+
+.opponent-card {
+  @include mixins.elevation-2;
+  transition: transform vars.$transition-fast, box-shadow vars.$transition-fast;
+
+  &:hover {
+    transform: translateY(-2px);
+    @include mixins.elevation-3;
+  }
+
+  &--dead {
+    @include mixins.dead-opponent;
+
+    &:hover {
+      transform: none;
+    }
+  }
+
+  &__name {
+    font-size: 1.25rem;
+    font-weight: 500;
+  }
+
+  &__status {
+    display: flex;
+    align-items: center;
+    gap: vars.$spacing-sm;
+    color: vars.$success-color;
+
+    &--dead {
+      color: vars.$text-disabled;
+    }
+
+    mat-icon {
+      font-size: 1.25rem;
+      width: 1.25rem;
+      height: 1.25rem;
+    }
+  }
+}
+
+@include mixins.reduced-motion {
+  .opponent-card {
+    transition: none;
+
+    &:hover {
+      transform: none;
+    }
+  }
+}

@@ -1,0 +1,90 @@
+<div class="tracker">
+  <div class="tracker__header">
+    <h2 class="tracker__title">Record Opponents (Matches 1-7)</h2>
+    <p class="tracker__subtitle">Enter each opponent's name as you face them</p>
+  </div>
+
+  @if (!isComplete()) {
+    <!-- Input Section -->
+    <div class="tracker__input-section">
+      <mat-form-field appearance="outline" class="tracker__input-field">
+        <mat-label>Opponent Name for Match {{ currentMatchNumber() }}</mat-label>
+        <input
+          matInput
+          type="text"
+          [value]="opponentName()"
+          (input)="onInputChange($any($event.target).value)"
+          [matAutocomplete]="auto"
+          placeholder="Enter opponent name"
+          [attr.aria-label]="'Enter opponent name for match ' + currentMatchNumber()"
+        />
+        <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onAutocompleteSelected($event.option.value)">
+          @for (suggestion of suggestions(); track suggestion) {
+            <mat-option [value]="suggestion">{{ suggestion }}</mat-option>
+          }
+        </mat-autocomplete>
+      </mat-form-field>
+      
+      <button
+        mat-raised-button
+        color="primary"
+        (click)="addOpponent()"
+        [disabled]="!canAddOpponent()"
+        class="tracker__add-button"
+        aria-label="Add opponent"
+      >
+        <mat-icon>add</mat-icon>
+        Add Opponent
+      </button>
+    </div>
+  }
+
+  <!-- Stepper showing match progress -->
+  <mat-stepper class="tracker__stepper" [linear]="false" [selectedIndex]="currentMatchNumber() - 1">
+    @for (match of matches(); track match) {
+      <mat-step [completed]="match <= opponents().length" [editable]="false">
+        <ng-template matStepLabel>Match {{ match }}</ng-template>
+        
+        @if (getOpponentForMatch(match); as opponent) {
+          <div class="tracker__step-content">
+            <mat-card class="opponent-card" [class.opponent-card--dead]="opponent.isDead">
+              <mat-card-header>
+                <mat-card-title class="opponent-card__name">
+                  {{ opponent.name }}
+                </mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                @if (!isComplete()) {
+                  <mat-slide-toggle
+                    [checked]="opponent.isDead"
+                    (change)="toggleOpponentStatus(opponent.id, $event.checked)"
+                    color="warn"
+                    [attr.aria-label]="'Mark ' + opponent.name + ' as ' + (opponent.isDead ? 'alive' : 'dead')"
+                  >
+                    {{ opponent.isDead ? 'Dead' : 'Alive' }}
+                  </mat-slide-toggle>
+                } @else {
+                  <div class="opponent-card__status" [class.opponent-card__status--dead]="opponent.isDead">
+                    <mat-icon>{{ opponent.isDead ? 'heart_broken' : 'favorite' }}</mat-icon>
+                    {{ opponent.isDead ? 'Dead' : 'Alive' }}
+                  </div>
+                }
+              </mat-card-content>
+            </mat-card>
+          </div>
+        } @else {
+          <div class="tracker__step-content">
+            <p class="tracker__empty-step">No opponent recorded yet</p>
+          </div>
+        }
+      </mat-step>
+    }
+  </mat-stepper>
+
+  @if (isComplete()) {
+    <div class="tracker__complete-message">
+      <mat-icon class="tracker__complete-icon">check_circle</mat-icon>
+      <p>All 7 opponents recorded! Switch to prediction mode to see your upcoming matches.</p>
+    </div>
+  }
+</div>

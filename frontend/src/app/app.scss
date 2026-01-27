@@ -1,0 +1,146 @@
+@use './styles/variables' as vars;
+@use './styles/mixins';
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: vars.$background-light;
+
+  &__toolbar {
+    position: sticky;
+    top: 0;
+    z-index: vars.$z-index-sticky;
+    @include mixins.elevation-2;
+  }
+
+  &__toolbar-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  &__branding {
+    display: flex;
+    align-items: center;
+    gap: vars.$spacing-sm;
+  }
+
+  &__logo {
+    font-size: 2rem;
+    width: 2rem;
+    height: 2rem;
+  }
+
+  &__title {
+    font-size: 1.25rem;
+    font-weight: 500;
+
+    @media (max-width: vars.$breakpoint-sm) {
+      font-size: 1rem;
+    }
+  }
+
+  &__new-lobby-button {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: white;
+
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.2);
+    }
+  }
+
+  &__button-text {
+    @media (max-width: vars.$breakpoint-sm) {
+      display: none;
+    }
+  }
+
+  &__main {
+    flex: 1;
+    padding: vars.$spacing-md 0;
+
+    @include mixins.md {
+      padding: vars.$spacing-lg 0;
+    }
+  }
+
+  &__container {
+    @include mixins.container;
+  }
+
+  &__tabs {
+    background-color: white;
+    border-radius: vars.$border-radius-md;
+    @include mixins.elevation-1;
+  }
+
+  &__tab-icon {
+    margin-right: vars.$spacing-sm;
+  }
+
+  &__tab-content {
+    padding: vars.$spacing-md;
+
+    @include mixins.md {
+      padding: vars.$spacing-lg;
+    }
+  }
+
+  &__tab-disabled-message {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: vars.$spacing-md;
+    padding: vars.$spacing-xxl;
+    text-align: center;
+    color: vars.$text-secondary;
+  }
+
+  &__info-icon {
+    font-size: 4rem;
+    width: 4rem;
+    height: 4rem;
+    color: vars.$text-secondary;
+  }
+
+  &__welcome {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: vars.$spacing-lg;
+    padding: vars.$spacing-xxl vars.$spacing-md;
+    text-align: center;
+    background-color: white;
+    border-radius: vars.$border-radius-md;
+    @include mixins.elevation-2;
+  }
+
+  &__welcome-icon {
+    font-size: 5rem;
+    width: 5rem;
+    height: 5rem;
+    color: vars.$primary-color;
+  }
+
+  &__start-button {
+    margin-top: vars.$spacing-md;
+    min-width: 200px;
+  }
+
+  &__footer {
+    padding: vars.$spacing-lg vars.$spacing-md;
+    background-color: #f5f5f5;
+    text-align: center;
+    border-top: 1px solid #e0e0e0;
+  }
+
+  &__footer-text {
+    margin: 0;
+    color: vars.$text-secondary;
+    font-size: 0.875rem;
+  }
+}

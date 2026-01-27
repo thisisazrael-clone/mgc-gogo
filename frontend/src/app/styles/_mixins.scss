@@ -1,0 +1,91 @@
+@use './variables' as vars;
+
+// Responsive breakpoint mixins - Mobile First
+@mixin xs {
+  @media (min-width: vars.$breakpoint-xs) {
+    @content;
+  }
+}
+
+@mixin sm {
+  @media (min-width: vars.$breakpoint-sm) {
+    @content;
+  }
+}
+
+@mixin md {
+  @media (min-width: vars.$breakpoint-md) {
+    @content;
+  }
+}
+
+@mixin lg {
+  @media (min-width: vars.$breakpoint-lg) {
+    @content;
+  }
+}
+
+@mixin xl {
+  @media (min-width: vars.$breakpoint-xl) {
+    @content;
+  }
+}
+
+// Reduced motion support
+@mixin reduced-motion {
+  @media (prefers-reduced-motion: reduce) {
+    @content;
+  }
+}
+
+// Container mixin
+@mixin container {
+  width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: vars.$spacing-md;
+  padding-right: vars.$spacing-md;
+
+  @include md {
+    max-width: 720px;
+  }
+
+  @include lg {
+    max-width: 960px;
+  }
+
+  @include xl {
+    max-width: 1200px;
+  }
+}
+
+// Dead opponent styling mixin
+@mixin dead-opponent {
+  opacity: vars.$dead-opacity;
+  text-decoration: vars.$dead-text-decoration;
+  filter: grayscale(80%);
+  transition: opacity vars.$transition-normal, filter vars.$transition-normal;
+
+  @include reduced-motion {
+    transition: none;
+  }
+}
+
+// Card elevation
+@mixin elevation-1 {
+  box-shadow: 0 2px 1px -1px rgba(0,0,0,.2),
+              0 1px 1px 0 rgba(0,0,0,.14),
+              0 1px 3px 0 rgba(0,0,0,.12);
+}
+
+@mixin elevation-2 {
+  box-shadow: 0 3px 1px -2px rgba(0,0,0,.2),
+              0 2px 2px 0 rgba(0,0,0,.14),
+              0 1px 5px 0 rgba(0,0,0,.12);
+}
+
+@mixin elevation-3 {
+  box-shadow: 0 3px 3px -2px rgba(0,0,0,.2),
+              0 3px 4px 0 rgba(0,0,0,.14),
+              0 1px 8px 0 rgba(0,0,0,.12);
+}

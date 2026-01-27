@@ -1,0 +1,272 @@
+@use 'sass:color';
+@use '../../styles/variables' as vars;
+@use '../../styles/mixins';
+
+.predictor {
+  padding: vars.$spacing-md;
+
+  @include mixins.md {
+    padding: vars.$spacing-lg;
+  }
+
+  &__header {
+    margin-bottom: vars.$spacing-xl;
+    text-align: center;
+  }
+
+  &__title {
+    margin: 0 0 vars.$spacing-md;
+    font-size: 1.75rem;
+    font-weight: 500;
+    color: vars.$text-primary;
+
+    @include mixins.md {
+      font-size: 2rem;
+    }
+  }
+
+  &__match-info {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: vars.$spacing-sm;
+    font-size: 1.125rem;
+  }
+
+  &__match-label {
+    color: vars.$text-secondary;
+  }
+
+  &__match-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: vars.$primary-color;
+  }
+
+  &__prediction-card {
+    margin-bottom: vars.$spacing-xl;
+  }
+
+  &__no-opponents {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: vars.$spacing-md;
+    margin-bottom: vars.$spacing-xl;
+    padding: vars.$spacing-lg;
+    background-color: #fff3e0;
+    border-radius: vars.$border-radius-md;
+    text-align: center;
+  }
+
+  &__warning-icon {
+    color: vars.$warn-color;
+    font-size: 3rem;
+    width: 3rem;
+    height: 3rem;
+  }
+
+  &__wheel-container {
+    margin: vars.$spacing-xl auto;
+    max-width: 600px;
+    padding: vars.$spacing-md;
+    background-color: #fff;
+    border-radius: vars.$border-radius-md;
+    @include mixins.elevation-2;
+  }
+
+  &__actions {
+    display: flex;
+    justify-content: center;
+    margin: vars.$spacing-xl 0;
+  }
+
+  &__next-button {
+    min-width: 200px;
+  }
+
+  &__stats {
+    max-width: 500px;
+    margin: vars.$spacing-xl auto 0;
+  }
+}
+
+.prediction-card {
+  @include mixins.elevation-3;
+  background: linear-gradient(135deg, vars.$primary-color 0%, #7c4dff 100%);
+  color: white;
+
+  &__opponent {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: vars.$spacing-md;
+    padding: vars.$spacing-lg 0;
+  }
+
+  &__icon {
+    font-size: 3rem;
+    width: 3rem;
+    height: 3rem;
+  }
+
+  &__name {
+    font-size: 2rem;
+    font-weight: 700;
+  }
+}
+
+.opponent-wheel {
+  width: 100%;
+  height: auto;
+  max-width: 500px;
+  margin: 0 auto;
+  display: block;
+
+  &__center {
+    fill: vars.$primary-color;
+    stroke: color.adjust(vars.$primary-color, $lightness: -10%);
+    stroke-width: 2;
+  }
+
+  &__center-text {
+    fill: white;
+    font-size: 14px;
+    font-weight: 700;
+    dominant-baseline: middle;
+  }
+
+  &__line {
+    stroke: #e0e0e0;
+    stroke-width: 2;
+    stroke-dasharray: 5, 5;
+
+    &--predicted {
+      stroke: vars.$accent-color;
+      stroke-width: 3;
+      stroke-dasharray: none;
+    }
+  }
+
+  &__circle {
+    fill: white;
+    stroke: vars.$primary-color;
+    stroke-width: 3;
+    transition: all vars.$transition-normal;
+
+    &--predicted {
+      fill: vars.$accent-color;
+      stroke: color.adjust(vars.$accent-color, $lightness: -10%);
+      stroke-width: 4;
+    }
+
+    &--dead {
+      fill: #f5f5f5;
+      stroke: vars.$text-disabled;
+      opacity: vars.$dead-opacity;
+    }
+
+    &:not(&--dead):not(&--predicted):hover {
+      fill: #f5f5f5;
+    }
+  }
+
+  &__match-number {
+    fill: vars.$text-secondary;
+    font-size: 10px;
+    font-weight: 600;
+    dominant-baseline: middle;
+  }
+
+  &__opponent-name {
+    fill: vars.$text-primary;
+    font-size: 12px;
+    font-weight: 500;
+    dominant-baseline: middle;
+
+    &--dead {
+      fill: vars.$text-disabled;
+      text-decoration: line-through;
+    }
+  }
+
+  &__opponent--predicted &__opponent-name {
+    fill: white;
+    font-weight: 700;
+  }
+
+  &__opponent--predicted &__match-number {
+    fill: white;
+  }
+
+  &__status-icon {
+    font-size: 12px;
+    fill: vars.$text-disabled;
+  }
+
+  &__arrow {
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  &__arrow-shape {
+    fill: vars.$accent-color;
+  }
+
+  &__arrow-label {
+    fill: vars.$accent-color;
+    font-size: 10px;
+    font-weight: 700;
+  }
+}
+
+.stats-card {
+  &__item {
+    display: flex;
+    justify-content: space-between;
+    padding: vars.$spacing-sm 0;
+    border-bottom: 1px solid #e0e0e0;
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  &__label {
+    color: vars.$text-secondary;
+    font-weight: 500;
+  }
+
+  &__value {
+    font-weight: 700;
+    font-size: 1.125rem;
+
+    &--alive {
+      color: vars.$success-color;
+    }
+
+    &--dead {
+      color: vars.$text-disabled;
+    }
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  50% {
+    opacity: 0.6;
+    transform: translateY(-3px);
+  }
+}
+
+@include mixins.reduced-motion {
+  .opponent-wheel__circle {
+    transition: none;
+  }
+
+  .opponent-wheel__arrow {
+    animation: none;
+  }
+}

@@ -1,0 +1,143 @@
+<div class="predictor">
+  <div class="predictor__header">
+    <h2 class="predictor__title">Match Prediction</h2>
+    <div class="predictor__match-info">
+      <span class="predictor__match-label">Current Match:</span>
+      <span class="predictor__match-number">{{ currentMatch() }}</span>
+    </div>
+  </div>
+
+  @if (predictedOpponent(); as predicted) {
+    <div class="predictor__prediction-card">
+      <mat-card class="prediction-card">
+        <mat-card-header>
+          <mat-card-title>Your Next Opponent</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="prediction-card__opponent">
+            <mat-icon class="prediction-card__icon">person</mat-icon>
+            <span class="prediction-card__name">{{ predicted.name }}</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  } @else if (aliveOpponentsCount() === 0) {
+    <div class="predictor__no-opponents">
+      <mat-icon class="predictor__warning-icon">warning</mat-icon>
+      <p>All opponents are marked as dead. No prediction available.</p>
+    </div>
+  }
+
+  <!-- Circular Opponent Wheel -->
+  <div class="predictor__wheel-container">
+    <svg class="opponent-wheel" viewBox="0 0 300 300" role="img" aria-label="Circular opponent rotation wheel">
+      <!-- Center circle -->
+      <circle cx="150" cy="150" r="30" class="opponent-wheel__center" />
+      <text x="150" y="155" class="opponent-wheel__center-text" text-anchor="middle">YOU</text>
+
+      <!-- Opponent positions -->
+      @for (opponent of opponents(); track opponent.id; let i = $index) {
+        <g [class.opponent-wheel__opponent--predicted]="isCurrentPrediction(opponent)"
+           [class.opponent-wheel__opponent--dead]="opponent.isDead">
+          
+          <!-- Connection line to center -->
+          <line 
+            x1="150" 
+            y1="150" 
+            [attr.x2]="getOpponentPosition(i).x" 
+            [attr.y2]="getOpponentPosition(i).y" 
+            class="opponent-wheel__line"
+            [class.opponent-wheel__line--predicted]="isCurrentPrediction(opponent)"
+          />
+          
+          <!-- Opponent circle -->
+          <circle 
+            [attr.cx]="getOpponentPosition(i).x" 
+            [attr.cy]="getOpponentPosition(i).y" 
+            r="35" 
+            class="opponent-wheel__circle"
+            [class.opponent-wheel__circle--predicted]="isCurrentPrediction(opponent)"
+            [class.opponent-wheel__circle--dead]="opponent.isDead"
+          />
+          
+          <!-- Match number -->
+          <text 
+            [attr.x]="getOpponentPosition(i).x" 
+            [attr.y]="getOpponentPosition(i).y - 8" 
+            class="opponent-wheel__match-number"
+            text-anchor="middle"
+          >
+            M{{ i + 1 }}
+          </text>
+          
+          <!-- Opponent name -->
+          <text 
+            [attr.x]="getOpponentPosition(i).x" 
+            [attr.y]="getOpponentPosition(i).y + 8" 
+            class="opponent-wheel__opponent-name"
+            [class.opponent-wheel__opponent-name--dead]="opponent.isDead"
+            text-anchor="middle"
+          >
+            {{ opponent.name }}
+          </text>
+          
+          <!-- Status icon -->
+          @if (opponent.isDead) {
+            <text 
+              [attr.x]="getOpponentPosition(i).x" 
+              [attr.y]="getOpponentPosition(i).y + 22" 
+              class="opponent-wheel__status-icon"
+              text-anchor="middle"
+            >
+              ☠
+            </text>
+          }
+        </g>
+      }
+
+      <!-- Rotation indicator arrow pointing to predicted opponent -->
+      @if (predictedOpponent()) {
+        <g class="opponent-wheel__arrow">
+          <polygon points="150,35 145,50 155,50" class="opponent-wheel__arrow-shape" />
+          <text x="150" y="27" class="opponent-wheel__arrow-label" text-anchor="middle">NEXT</text>
+        </g>
+      }
+    </svg>
+  </div>
+
+  <!-- Next Match Button -->
+  <div class="predictor__actions">
+    <button
+      mat-fab
+      extended
+      color="primary"
+      (click)="nextMatch()"
+      [disabled]="!predictedOpponent()"
+      class="predictor__next-button"
+      aria-label="Advance to next match"
+    >
+      <mat-icon>arrow_forward</mat-icon>
+      Next Match
+    </button>
+  </div>
+
+  <!-- Stats -->
+  <div class="predictor__stats">
+    <mat-card class="stats-card">
+      <mat-card-content>
+        <div class="stats-card__item">
+          <span class="stats-card__label">Total Opponents:</span>
+          <span class="stats-card__value">{{ opponents().length }}</span>
+        </div>
+        <div class="stats-card__item">
+          <span class="stats-card__label">Alive:</span>
+          <span class="stats-card__value stats-card__value--alive">{{ aliveOpponentsCount() }}</span>
+        </div>
+        <div class="stats-card__item">
+          <span class="stats-card__label">Dead:</span>
+          <span class="stats-card__value stats-card__value--dead">{{ opponents().length - aliveOpponentsCount() }}</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

@@ -1,0 +1,61 @@
+@use '@angular/material' as mat;
+@use './app/styles/variables' as vars;
+@use './app/styles/mixins';
+
+// Include Material core styles
+@include mat.core();
+
+// Define a custom Material 3 theme
+$custom-theme: mat.define-theme((
+  color: (
+    theme-type: light,
+    primary: mat.$violet-palette,
+    tertiary: mat.$orange-palette,
+  ),
+  typography: (
+    brand-family: vars.$font-family-base,
+    plain-family: vars.$font-family-base,
+  ),
+  density: (
+    scale: 0,
+  )
+));
+
+// Include Material theme
+@include mat.all-component-themes($custom-theme);
+
+// Global styles
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: vars.$font-family-base;
+  font-size: vars.$font-size-base;
+  line-height: vars.$line-height-base;
+  color: vars.$text-primary;
+  background-color: vars.$background-light;
+}
+
+// Reduced motion support
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+// Utility classes
+.dead-opponent {
+  @include mixins.dead-opponent;
+}
+
+.container {
+  @include mixins.container;
+}

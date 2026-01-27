@@ -1,0 +1,84 @@
+<div class="app">
+  <mat-toolbar color="primary" class="app__toolbar">
+    <div class="app__toolbar-content">
+      <div class="app__branding">
+        <mat-icon class="app__logo">sports_esports</mat-icon>
+        <span class="app__title">Magic Chess: Go Go</span>
+      </div>
+      
+      @if (hasLobby()) {
+        <button
+          mat-raised-button
+          (click)="onNewLobby()"
+          class="app__new-lobby-button"
+          aria-label="Start new lobby"
+        >
+          <mat-icon>refresh</mat-icon>
+          <span class="app__button-text">New Lobby</span>
+        </button>
+      }
+    </div>
+  </mat-toolbar>
+
+  <main class="app__main">
+    <div class="app__container">
+      @if (hasLobby()) {
+        <mat-tab-group 
+          [selectedIndex]="selectedTab()"
+          (selectedIndexChange)="onTabChange($event)"
+          class="app__tabs"
+        >
+          <mat-tab [disabled]="isLobbyComplete()">
+            <ng-template mat-tab-label>
+              <mat-icon class="app__tab-icon">edit</mat-icon>
+              Record Opponents
+            </ng-template>
+            <div class="app__tab-content">
+              <app-tracker />
+            </div>
+          </mat-tab>
+
+          <mat-tab [disabled]="!isLobbyComplete()">
+            <ng-template mat-tab-label>
+              <mat-icon class="app__tab-icon">psychology</mat-icon>
+              Predict Matches
+            </ng-template>
+            <div class="app__tab-content">
+              @if (isLobbyComplete()) {
+                <app-predictor />
+              } @else {
+                <div class="app__tab-disabled-message">
+                  <mat-icon class="app__info-icon">info</mat-icon>
+                  <p>Complete all 7 matches to unlock prediction mode</p>
+                </div>
+              }
+            </div>
+          </mat-tab>
+        </mat-tab-group>
+      } @else {
+        <div class="app__welcome">
+          <mat-icon class="app__welcome-icon">sports_esports</mat-icon>
+          <h1>Welcome to Magic Chess: Go Go Enemy Tracker</h1>
+          <p>Track your opponents and predict future matches</p>
+          <button
+            mat-raised-button
+            color="primary"
+            (click)="storageService.createNewLobby()"
+            class="app__start-button"
+          >
+            <mat-icon>play_arrow</mat-icon>
+            Start Tracking
+          </button>
+        </div>
+      }
+    </div>
+  </main>
+
+  <footer class="app__footer">
+    <p class="app__footer-text">
+      Track opponents in matches 1-7, then predict your next opponent
+    </p>
+  </footer>
+</div>
+
+
