@@ -8,6 +8,8 @@ export interface Opponent {
   id: string;
   name: string;
   isDead: boolean;
+  icon?: string;
+  color?: string;
   matchResults?: MatchResult[];
   killCount?: number;
   killedBy?: string | null;

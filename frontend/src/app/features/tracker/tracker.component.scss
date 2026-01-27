@@ -277,6 +277,7 @@
     opacity: 0.6;
     background-color: rgba(vars.$error-color, 0.05);
     border-color: rgba(vars.$error-color, 0.2);
+    filter: grayscale(100%);
 
     &:hover {
       transform: translateY(-2px);
@@ -303,37 +304,27 @@
     color: vars.$text-secondary;
   }
 
-  &__status-icon {
-    font-size: 1.5rem;
-    width: 1.5rem;
-    height: 1.5rem;
-
-    &--alive {
-      color: vars.$success-color;
-    }
-
-    &--dead {
-      color: vars.$error-color;
-    }
+  &__content {
+    padding: vars.$spacing-lg vars.$spacing-md !important;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: vars.$spacing-md;
   }
 
-  &__content {
-    padding: vars.$spacing-md !important;
-    text-align: center;
+  &__avatar-icon {
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    transition: transform vars.$transition-fast;
   }
 
   &__name {
     font-size: 1.1rem;
     font-weight: 600;
     color: vars.$text-primary;
-    margin-bottom: vars.$spacing-xs;
     word-break: break-word;
-  }
-
-  &__status {
-    font-size: 0.85rem;
-    color: vars.$text-secondary;
-    font-weight: 500;
   }
 }
 

@@ -8,6 +8,22 @@ import { Opponent } from '../models/opponent.model';
 export class StorageService {
   private readonly STORAGE_KEY = 'mgc-gogo-lobby-state';
   
+  // Icon pool for random opponent avatars
+  private readonly ICON_POOL = [
+    'shield', 'sports_martial_arts', 'psychology', 'pets', 'android',
+    'sports_esports', 'emoji_emotions', 'star', 'local_fire_department',
+    'science', 'token', 'sports_mma', 'security', 'bug_report', 'spa',
+    'brightness_7', 'adb', 'face', 'sports_kabaddi', 'biotech',
+    'electric_bolt', 'rocket_launch', 'cyclone', 'whatshot', 'sentiment_very_satisfied'
+  ];
+  
+  // Color pool for random opponent colors
+  private readonly COLOR_POOL = [
+    '#2196f3', '#4caf50', '#ff9800', '#9c27b0', '#00bcd4',
+    '#cddc39', '#ff5722', '#3f51b5', '#e91e63', '#009688',
+    '#8bc34a', '#ff6f00', '#00acc1', '#d32f2f', '#7b1fa2'
+  ];
+  
   // Signal-based state
   private readonly state = signal<LobbyState>(this.loadState());
 
@@ -21,6 +37,14 @@ export class StorageService {
 
   getLobbySignal() {
     return this.state;
+  }
+
+  private getRandomIcon(): string {
+    return this.ICON_POOL[Math.floor(Math.random() * this.ICON_POOL.length)];
+  }
+
+  private getRandomColor(): string {
+    return this.COLOR_POOL[Math.floor(Math.random() * this.COLOR_POOL.length)];
   }
 
   createNewLobby(playerName: string = 'Player'): void {
@@ -51,6 +75,8 @@ export class StorageService {
       id: crypto.randomUUID(),
       name: name.trim(),
       isDead: false,
+      icon: this.getRandomIcon(),
+      color: this.getRandomColor(),
       matchResults: [],
       killCount: 0,
       killedBy: null,
@@ -233,9 +259,11 @@ export class StorageService {
         // Restore Date objects
         if (parsed.currentLobby) {
           parsed.currentLobby.createdAt = new Date(parsed.currentLobby.createdAt);
-          // Restore MatchResult timestamps
+          // Restore MatchResult timestamps and assign icons/colors to existing opponents
           parsed.currentLobby.opponents = parsed.currentLobby.opponents.map(opp => ({
             ...opp,
+            icon: opp.icon || this.getRandomIcon(),
+            color: opp.color || this.getRandomColor(),
             matchResults: (opp.matchResults || []).map(result => ({
               ...result,
               timestamp: new Date(result.timestamp)

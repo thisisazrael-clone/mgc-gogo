@@ -67,6 +67,7 @@
               type="text"
               [value]="opponentName()"
               (input)="onInputChange($any($event.target).value)"
+              (keydown.enter)="addOpponent()"
               [matAutocomplete]="auto"
               placeholder="Enter opponent name"
               [attr.aria-label]="'Enter opponent name for match ' + currentMatchNumber()"
@@ -93,47 +94,6 @@
       </mat-card-content>
     </mat-card>
   }
-
-  <!-- Opponents Grid -->
-  <div class="tracker__opponents-section">
-    <h3 class="tracker__opponents-title">Enemies ({{ aliveOpponentsCount() }}/{{ opponents().length }} alive)</h3>
-    
-    @if (opponents().length === 0) {
-      <div class="tracker__empty-state">
-        <mat-icon class="tracker__empty-icon">person_add</mat-icon>
-        <p>No enemies recorded yet. Start by adding your first opponent above.</p>
-      </div>
-    } @else {
-      <div class="tracker__opponents-grid">
-        @for (opponent of opponents(); track opponent.id; let index = $index) {
-          <mat-card 
-            class="opponent-box" 
-            [class.opponent-box--dead]="opponent.isDead"
-            [class.opponent-box--pending-elimination]="pendingElimination() === opponent.id"
-          >
-            <mat-card-header class="opponent-box__header">
-              <div class="opponent-box__match-number">Match {{ index + 1 }}</div>
-              @if (opponent.isDead) {
-                <mat-icon class="opponent-box__status-icon opponent-box__status-icon--dead">
-                  heart_broken
-                </mat-icon>
-              } @else {
-                <mat-icon class="opponent-box__status-icon opponent-box__status-icon--alive">
-                  favorite
-                </mat-icon>
-              }
-            </mat-card-header>
-            <mat-card-content class="opponent-box__content">
-              <div class="opponent-box__name">{{ opponent.name }}</div>
-              <div class="opponent-box__status">
-                {{ opponent.isDead ? 'Eliminated' : 'In Game' }}
-              </div>
-            </mat-card-content>
-          </mat-card>
-        }
-      </div>
-    }
-  </div>
 
   <!-- Next Match Actions -->
   @if (opponents().length > 0) {
@@ -187,4 +147,39 @@
       </mat-card>
     </div>
   }
+
+  <!-- Opponents Grid -->
+  <div class="tracker__opponents-section">
+    <h3 class="tracker__opponents-title">Enemies ({{ aliveOpponentsCount() }}/{{ opponents().length }} alive)</h3>
+    
+    @if (opponents().length === 0) {
+      <div class="tracker__empty-state">
+        <mat-icon class="tracker__empty-icon">person_add</mat-icon>
+        <p>No enemies recorded yet. Start by adding your first opponent above.</p>
+      </div>
+    } @else {
+      <div class="tracker__opponents-grid">
+        @for (opponent of opponents(); track opponent.id; let index = $index) {
+          <mat-card 
+            class="opponent-box" 
+            [class.opponent-box--dead]="opponent.isDead"
+            [class.opponent-box--pending-elimination]="pendingElimination() === opponent.id"
+          >
+            <mat-card-header class="opponent-box__header">
+              <div class="opponent-box__match-number">Match {{ index + 1 }}</div>
+            </mat-card-header>
+            <mat-card-content class="opponent-box__content">
+              <mat-icon 
+                class="opponent-box__avatar-icon"
+                [style.color]="opponent.color || '#6200ea'"
+              >
+                {{ opponent.icon || 'account_circle' }}
+              </mat-icon>
+              <div class="opponent-box__name">{{ opponent.name }}</div>
+            </mat-card-content>
+          </mat-card>
+        }
+      </div>
+    }
+  </div>
 </div>
