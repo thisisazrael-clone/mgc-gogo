@@ -12,6 +12,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { StorageService } from '../../core/services/storage.service';
 import { AutocompleteService } from '../../core/services/autocomplete.service';
 import { predictOpponent } from '../../core/utils/prediction.util';
+import { MatchResult } from '../../core/models/opponent.model';
 import { 
   FightAnimationDialogComponent, 
   FightAnimationDialogData, 
@@ -139,7 +140,7 @@ export class TrackerComponent {
     const name = this.opponentName().trim();
     if (name && this.canAddOpponent()) {
       // Open fight dialog first
-      this.openFightDialog(name).then(result => {
+      this.openFightDialog(name, []).then(result => {
         if (result) {
           // Add opponent after fight animation
           this.storageService.addOpponent(name);
@@ -175,7 +176,7 @@ export class TrackerComponent {
     if (matchNum >= 7 && opps.length === 7) {
       const predicted = predictOpponent(matchNum, opps);
       if (predicted) {
-        this.openFightDialog(predicted.name).then(result => {
+        this.openFightDialog(predicted.name, predicted.matchResults || []).then(result => {
           if (result) {
             // Record match outcome
             this.storageService.recordMatchOutcome(predicted.id, result.outcome, matchNum);
@@ -213,18 +214,19 @@ export class TrackerComponent {
   }
 
   getRecentMatchHistory(opponent: any) {
-    return (opponent.matchResults || []).slice(-5);
+    return (opponent.matchResults || []).slice(-3);
   }
 
   updatePlayerName(name: string): void {
     this.storageService.updatePlayerName(name);
   }
 
-  private openFightDialog(opponentName: string): Promise<FightAnimationDialogResult | null> {
+  private openFightDialog(opponentName: string, matchHistory?: MatchResult[]): Promise<FightAnimationDialogResult | null> {
     const dialogData: FightAnimationDialogData = {
       playerName: this.playerName(),
       opponentName,
-      matchNumber: this.currentMatchNumber()
+      matchNumber: this.currentMatchNumber(),
+      matchHistory: matchHistory || []
     };
 
     const dialogRef = this.dialog.open(FightAnimationDialogComponent, {

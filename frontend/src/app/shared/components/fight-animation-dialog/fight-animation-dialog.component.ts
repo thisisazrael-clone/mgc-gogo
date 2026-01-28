@@ -4,11 +4,13 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { FormsModule } from '@angular/forms';
+import { MatchResult } from '../../../core/models/opponent.model';
 
 export interface FightAnimationDialogData {
   playerName: string;
   opponentName: string;
   matchNumber: number;
+  matchHistory?: MatchResult[];
 }
 
 export interface FightAnimationDialogResult {
@@ -24,6 +26,26 @@ export interface FightAnimationDialogResult {
     <h2 mat-dialog-title>Match {{ data.matchNumber }}</h2>
     
     <mat-dialog-content>
+      <div class="match-history-section">
+        <h3 class="history-title">Match History vs {{ data.opponentName }}</h3>
+        @if (data.matchHistory && data.matchHistory.length > 0) {
+          <div class="history-list">
+            @for (result of data.matchHistory; track result.matchNumber) {
+              <div class="history-item">
+                <span class="history-match-num">Match {{ result.matchNumber }}</span>
+                <span class="history-badge" 
+                      [class.--win]="result.outcome === 'win'"
+                      [class.--loss]="result.outcome === 'loss'">
+                  {{ result.outcome === 'win' ? 'W' : 'L' }}
+                </span>
+              </div>
+            }
+          </div>
+        } @else {
+          <p class="no-history">No match history yet</p>
+        }
+      </div>
+
       <div class="fight-arena">
         <div class="fighter player" [class.attacking]="playerAttacking()">
           <mat-icon class="fighter-icon">shield</mat-icon>
@@ -76,6 +98,70 @@ export interface FightAnimationDialogResult {
     mat-dialog-content {
       padding: vars.$spacing-md 0;
       min-width: 400px;
+    }
+
+    .match-history-section {
+      margin: 0 vars.$spacing-md vars.$spacing-lg;
+      padding: vars.$spacing-md;
+      background: rgba(vars.$primary-color, 0.03);
+      border-radius: vars.$border-radius-md;
+      border: 1px solid rgba(vars.$primary-color, 0.1);
+    }
+
+    .history-title {
+      margin: 0 0 vars.$spacing-sm 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: vars.$text-primary;
+    }
+
+    .history-list {
+      max-height: 200px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: vars.$spacing-xs;
+    }
+
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: vars.$spacing-xs vars.$spacing-sm;
+      background: white;
+      border-radius: vars.$border-radius-sm;
+      font-size: 13px;
+    }
+
+    .history-match-num {
+      color: vars.$text-secondary;
+      font-weight: 500;
+    }
+
+    .history-badge {
+      padding: 2px 8px;
+      border-radius: vars.$border-radius-sm;
+      font-weight: 600;
+      font-size: 12px;
+      
+      &.--win {
+        background-color: rgba(vars.$success-color, 0.1);
+        color: vars.$success-color;
+      }
+      
+      &.--loss {
+        background-color: rgba(vars.$error-color, 0.1);
+        color: vars.$error-color;
+      }
+    }
+
+    .no-history {
+      margin: 0;
+      padding: vars.$spacing-md;
+      text-align: center;
+      color: vars.$text-secondary;
+      font-style: italic;
+      font-size: 13px;
     }
 
     .fight-arena {
