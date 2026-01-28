@@ -55,8 +55,8 @@
     }
   </div>
 
-  <!-- Input Section (only show during first 7 matches) -->
-  @if (currentMatchNumber() <= 7) {
+  <!-- Input Section (only show until 7 opponents recorded) -->
+  @if (showOpponentInput()) {
     <mat-card class="tracker__input-card">
       <mat-card-content>
         <div class="tracker__input-section">
@@ -100,7 +100,7 @@
     <div class="tracker__actions">
       <mat-card class="tracker__actions-card">
         <mat-card-content>
-          @if (currentMatchNumber() <= 7) {
+          @if (showOpponentInput()) {
             <p class="tracker__actions-hint">
               After adding all 7 enemies, use "Next Match" to advance and track eliminations.
             </p>
@@ -158,12 +158,16 @@
         <p>No enemies recorded yet. Start by adding your first opponent above.</p>
       </div>
     } @else {
-      <div class="tracker__opponents-grid">
+      <div class="tracker__opponents-grid" style="display: flex; flex-flow: row wrap; gap: 8px; justify-content: flex-start; align-items: flex-start;">
         @for (opponent of opponents(); track opponent.id; let index = $index) {
           <mat-card 
             class="opponent-box" 
             [class.opponent-box--dead]="opponent.isDead"
             [class.opponent-box--pending-elimination]="pendingElimination() === opponent.id"
+            [style.width.px]="180"
+            [style.maxWidth.px]="180"
+            [style.minWidth.px]="180"
+            [style.flex]="'0 0 180px'"
           >
             <mat-card-header class="opponent-box__header">
               <div class="opponent-box__match-number">Match {{ index + 1 }}</div>
@@ -176,6 +180,20 @@
                 {{ opponent.icon || 'account_circle' }}
               </mat-icon>
               <div class="opponent-box__name">{{ opponent.name }}</div>
+              
+              @if (getRecentMatchHistory(opponent).length > 0) {
+                <div class="opponent-box__history">
+                  @for (result of getRecentMatchHistory(opponent); track result.matchNumber) {
+                    <div 
+                      class="opponent-box__history-badge"
+                      [class.opponent-box__history-badge--win]="result.outcome === 'win'"
+                      [class.opponent-box__history-badge--loss]="result.outcome === 'loss'"
+                    >
+                      {{ result.outcome === 'win' ? 'W' : 'L' }}
+                    </div>
+                  }
+                </div>
+              }
             </mat-card-content>
           </mat-card>
         }

@@ -108,6 +108,10 @@ export class TrackerComponent {
     return !existingOpponents.some(opp => opp.name.toLowerCase() === nameLower);
   });
 
+  protected readonly showOpponentInput = computed(() => {
+    return this.opponents().length < 7;
+  });
+
   protected readonly canAdvanceMatch = computed(() => {
     const matchNum = this.currentMatchNumber();
     const opps = this.opponents();
@@ -206,6 +210,10 @@ export class TrackerComponent {
 
   getOpponentById(id: string) {
     return this.opponents().find(opp => opp.id === id);
+  }
+
+  getRecentMatchHistory(opponent: any) {
+    return (opponent.matchResults || []).slice(-5);
   }
 
   updatePlayerName(name: string): void {

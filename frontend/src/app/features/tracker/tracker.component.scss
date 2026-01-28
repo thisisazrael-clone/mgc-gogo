@@ -189,16 +189,17 @@
   }
 
   &__opponents-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: vars.$spacing-md;
-    
-    @include mixins.md {
-      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-    }
-    
-    @include mixins.lg {
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    display: flex;
+    flex-flow: row wrap;
+    gap: vars.$spacing-sm;
+    justify-content: flex-start;
+    align-items: flex-start;
+
+    > * {
+      width: 180px !important;
+      max-width: 180px !important;
+      min-width: 180px !important;
+      flex: 0 0 180px !important;
     }
   }
 
@@ -267,9 +268,11 @@
   transition: transform vars.$transition-fast, box-shadow vars.$transition-fast;
   cursor: default;
   border: 2px solid transparent;
+  border-top: 4px solid;
+  border-top-color: var(--opponent-color, vars.$primary-color);
 
   &:hover {
-    transform: translateY(-4px);
+    transform: translateY(-4px) scale(1.05);
     @include mixins.elevation-3;
   }
 
@@ -305,7 +308,7 @@
   }
 
   &__content {
-    padding: vars.$spacing-lg vars.$spacing-md !important;
+    padding: vars.$spacing-xl vars.$spacing-md !important;
     text-align: center;
     display: flex;
     flex-direction: column;
@@ -314,9 +317,9 @@
   }
 
   &__avatar-icon {
-    font-size: 64px;
-    width: 64px;
-    height: 64px;
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
     transition: transform vars.$transition-fast;
   }
 
@@ -325,6 +328,40 @@
     font-weight: 600;
     color: vars.$text-primary;
     word-break: break-word;
+  }
+
+  &__history {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: vars.$spacing-xs;
+  }
+
+  &__history-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: white;
+    transition: transform vars.$transition-fast;
+
+    &:hover {
+      transform: scale(1.1);
+    }
+
+    &--win {
+      background-color: vars.$success-color;
+    }
+
+    &--loss {
+      background-color: vars.$error-color;
+    }
   }
 }
 
