@@ -1,233 +1,112 @@
 # Copilot Instructions — Magic Chess: Go Go Enemy Tracker
 
-**Last Updated:** 2026-01-29
-
-Single-page **frontend-only** Angular 21 app to track match opponents in an 8‑player *Magic Chess: Go Go* lobby and predict upcoming opponents.
-
-## Goal
-
-During the first 7 matches, the player faces each of the other 7 opponents once. After match 7, the opponent order repeats from the start.
-
-- Store the opponent list in the order faced in matches **1 → 7**.
-- For match **N > 7**, predicted opponent is `opponents[(N - 1) % 7]`.
-- Skip dead opponents when predicting: advance to the next alive opponent in sequence.
-- Keep the prediction logic as a small, pure function.
+Single-page **frontend-only** Angular 21 app to track match opponents in an 8-player *Magic Chess: Go Go* lobby and predict upcoming opponents.
 
 ## Quick Start
 
 ```bash
 cd frontend
 npm install
-npm start                # ng serve → http://localhost:4200
-npm run build            # production build → dist/
-npm test                 # Vitest unit tests (watch mode)
-npm run watch            # build in watch mode
+npm start       # http://localhost:4200
+npm test        # Vitest in watch mode
+npm run build   # production → dist/frontend/browser/
 ```
 
-### npm Scripts (frontend/package.json)
+## Domain Rules (Do Not Change)
 
-- `npm start` - Start dev server (auto-reload on changes)
-- `npm run build` - Production build with optimization
-- `npm test` - Run Vitest tests in watch mode
-- `npm run watch` - Build in watch mode for development
-- `ng generate component <name>` - Scaffold new component (standalone by default)
+- **8-player lobby**: User + 7 unique opponents
+- **Matches 1–7**: Face each opponent once (record in order faced)
+- **Match 8+**: Cycle repeats → predict with `opponents[(N-1) % 7]`
+- **Dead opponents**: Skip to next alive in sequence when predicting
 
----
+See [prediction.util.ts](frontend/src/app/core/utils/prediction.util.ts) for the pure `predictOpponent()` function.
 
-## Architecture Patterns
-
-### Signal-Based State (Angular 21 Signals)
-
-All state management uses Angular signals — **no Zone.js, no RxJS for local state** (exception: Angular Material Dialog returns Observables for `afterClosed()` events, which is acceptable).
-
-- **StorageService**: Single signal-based source of truth (`signal<LobbyState>`)
-- **Components**: Use `computed()` for derived state, `inject()` for DI
-- **Change detection**: All components use `ChangeDetectionStrategy.OnPush`
-- **App config**: Zoneless mode via `provideZonelessChangeDetection()`
-
-Example from [tracker.component.ts](frontend/src/app/features/tracker/tracker.component.ts):
-```ts
-protected readonly lobby = this.storageService.getLobbySignal();
-protected readonly opponents = computed(() => this.lobby().currentLobby?.opponents ?? []);
-protected readonly predictedOpponent = computed(() => {
-  const matchNum = this.currentMatchNumber();
-  const opps = this.opponents();
-  return matchNum > 7 ? predictOpponent(matchNum, opps) : null;
-});
-```
-
-### Data Flow
-
-1. **StorageService** (`core/services/storage.service.ts`): 
-   - Manages `LobbyState` signal
-   - Persists to `localStorage` on every mutation
-   - Exposes `getLobbySignal()` for reactive access
-   
-2. **Pure utilities** (`core/utils/prediction.util.ts`):
-   - `predictOpponent()`: Core prediction logic with dead opponent skipping
-   - `validateUniqueOpponents()`: Validation for first 7 matches
-   
-3. **Feature components**: 
-   - Import `StorageService` signal
-   - Use `computed()` for derived state
-   - Call service methods for mutations
-
-### LocalStorage Persistence
-
-State survives page refresh via `localStorage`.
-
-**Naming convention**: Use kebab-case with project prefix: `<project>-<feature>-state`
-- Current key: `mgc-gogo-lobby-state` ✅
-- Bad example: `lobbyState`, `MGC_GOGO_STATE`
-
-```ts
-private saveState(): void {
-  localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.state()));
-}
-
-private loadState(): LobbyState {
-  const stored = localStorage.getItem(this.STORAGE_KEY);
-  if (stored) {
-    const parsed = JSON.parse(stored);
-    // Restore Date objects
-    if (parsed.currentLobby) {
-      parsed.currentLobby.createdAt = new Date(parsed.currentLobby.createdAt);
-    }
-    return parsed;
-  }
-  return { currentLobby: null, opponentNameHistory: [] };
-}
-```
-
----
-
-## Domain Rules
-
-Don't "invent" game behavior — follow these established rules:
-
-- Lobby size: **8 players total** (including the user).
-- Opponents in matches **1–7** are **7 unique** players (no repeats).
-- From match **8 onward**, the app predicts based on the recorded order from matches **1–7**.
-- **Dead opponent handling**: When predicting, skip dead opponents by advancing to the next alive opponent in the cycle.
-
-### Data Model
-
-- **Lobby** (`core/models/lobby.model.ts`): Contains `id`, `createdAt`, `opponents[]`, `currentMatch`, `isComplete`
-- **Opponent** (`core/models/opponent.model.ts`): `id`, `name`, `isDead` flag
-- **LobbyState**: `currentLobby`, `opponentNameHistory[]` for autocomplete
-
-### Validation Rules (enforced in computed signals)
-
-- Match number must be `>= 1`
-- Matches 1–7 require exactly 7 unique opponents (case-insensitive names)
-- Cannot add opponent if lobby already has 7
-- Cannot advance match until all 7 opponents recorded
-
----
-
-## Project Structure
+## Architecture
 
 ```
 frontend/src/app/
-  core/
-    models/               # Lobby, Opponent interfaces
-    services/             # StorageService, AutocompleteService
-    utils/                # prediction.util.ts (pure functions)
-  features/
-    tracker/              # Main UI for recording/predicting matches
-  shared/
-    components/
-      confirm-dialog/     # Reusable Material dialog
-  styles/
-    _variables.scss       # Tokens, breakpoints
-    _mixins.scss          # Mobile-first media queries
-  app.ts / app.config.ts  # Root component, app-level providers
+├── core/
+│   ├── models/      # Lobby, Opponent interfaces
+│   ├── services/    # StorageService (signal-based state), AutocompleteService
+│   └── utils/       # prediction.util.ts (pure functions)
+├── features/
+│   ├── tracker/     # Main opponent recording UI
+│   └── predictor/   # Visual wheel prediction display
+├── shared/components/
+│   ├── confirm-dialog/        # Reusable confirmation
+│   └── fight-animation-dialog/# Match outcome recording
+└── styles/          # _variables.scss, _mixins.scss
 ```
 
----
+### State Management Pattern
 
-## Angular 21 Conventions
-
-**This project uses Angular 21 modern patterns. See `.github/instructions/angular-frontend-best-practices.instructions.md` for comprehensive rules.**
-
-Key patterns in this codebase:
-
-- **Standalone components** (`standalone: true`) everywhere
-- **Signal APIs**: `signal()`, `computed()`, `inject()`, `model()`, `input()`, `output()`
-- **Zoneless change detection** (`provideZonelessChangeDetection()`)
-- **OnPush change detection** for all components (best practice even in zoneless mode)
-- **New template syntax**: `@if`, `@for`, `@switch` (not `*ngIf`/`*ngFor`)
-- **Angular Material 21** for UI components
-
-### Component API Examples
+**All state via Angular signals — no Zone.js, no RxJS for local state.**
 
 ```ts
-// Input signals
-name = input<string>();                    // Optional
-userId = input.required<string>();         // Required
-count = input(0);                          // With default
-disabled = input(false, { transform: booleanAttribute }); // With transform
+// StorageService is the single source of truth
+private readonly state = signal<LobbyState>(this.loadState());
+getLobbySignal() { return this.state; }  // Exposes read-only signal
 
-// Output signals
-itemSelected = output<string>();
-saveClicked = output({ alias: 'save' });
-
-// Model signals (two-way binding)
-checked = model(false);                    // Works with [(ngModel)]
-value = model<string>('');
-
-// Usage
-itemSelected.emit('value');
+// Components derive state with computed()
+protected readonly lobby = this.storageService.getLobbySignal();
+protected readonly opponents = computed(() => this.lobby().currentLobby?.opponents ?? []);
 ```
 
-Example component structure ([tracker.component.ts](frontend/src/app/features/tracker/tracker.component.ts)):
+- **Mutations**: Call `StorageService` methods (e.g., `addOpponent()`, `advanceMatch()`)
+- **Persistence**: `localStorage` key `mgc-gogo-lobby-state` — auto-saves on every mutation
+- **Dialogs**: `MatDialog.afterClosed()` is the one acceptable RxJS observable usage
+
+### Data Models
+
+- **Lobby**: `id`, `playerName`, `opponents[]`, `currentMatch`, `isComplete`, `matchHistory[]`
+- **Opponent**: `id`, `name`, `isDead`, `icon`, `color`, `matchResults[]`, `killCount`, `killedBy`, `eliminatedAtMatch`
+
+## Angular 21 Patterns (MUST Follow)
+
+**Detailed rules in [angular-frontend-best-practices.instructions.md](.github/instructions/angular-frontend-best-practices.instructions.md)**
+
+| Pattern | Example |
+|---------|---------|
+| Standalone components | `standalone: true` on every `@Component` |
+| Zoneless | `provideZonelessChangeDetection()` in [app.config.ts](frontend/src/app/app.config.ts) |
+| OnPush | `changeDetection: ChangeDetectionStrategy.OnPush` always |
+| Signal APIs | `signal()`, `computed()`, `inject()`, `model()`, `input()`, `output()` |
+| Template syntax | `@if`, `@for`, `@switch` (not `*ngIf`/`*ngFor`) |
+| DI | `inject()` function, not constructor injection |
+| Cleanup | `takeUntilDestroyed(this.destroyRef)` for any subscriptions |
+
+### Component Template
+
 ```ts
 @Component({
-  selector: 'app-tracker',
+  selector: 'app-example',
   standalone: true,
-  imports: [FormsModule, MatFormFieldModule, /* ... */],
-  templateUrl: './tracker.component.html',
+  imports: [/* Material modules, FormsModule, etc. */],
+  templateUrl: './example.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class TrackerComponent {
+export class ExampleComponent {
   private readonly storageService = inject(StorageService);
-  protected readonly lobby = this.storageService.getLobbySignal();
-  protected readonly canAddOpponent = computed(() => /* ... */);
+  protected readonly data = computed(() => /* derive from signals */);
 }
 ```
 
----
-
-## Development Workflow
-
-1. **Start dev server**: `cd frontend && npm start`
-2. **Make changes**: Files auto-reload via Angular CLI
-3. **Run tests**: `npm test` (keep in watch mode during development)
-4. **Check types**: TypeScript compiler runs automatically with build
-5. **Build for production**: `npm run build` → outputs to `dist/frontend/browser/`
-
-### Common Tasks
-
-- **Generate component**: `ng generate component features/my-feature --standalone`
-- **Generate service**: `ng generate service core/services/my-service`
-- **Add Angular Material component**: Check [Material docs](https://material.angular.io/) for import path
-
----
-
 ## Testing
 
-- Unit tests use **Vitest** (not Karma)
-- Test standalone components with `TestBed`
-- Mock `StorageService` for component tests
-- Test pure functions (`prediction.util.ts`) in isolation
+- **Framework**: Vitest (not Karma/Jasmine)
+- **Pure functions**: Test `prediction.util.ts` in isolation
+- **Components**: Use `TestBed`, mock `StorageService`
 
----
+## Common Tasks
 
-## What to Deliver When Generating Code
+```bash
+ng generate component features/my-feature --standalone
+ng generate service core/services/my-service
+```
 
-- Include file paths in responses when touching multiple files.
-- Call out assumptions if any game-rule detail is uncertain.
-- **When creating new files**, check if they should be ignored (e.g., build outputs, dependencies, IDE files). If yes, add them to `.gitignore`.
-- Follow `.github/instructions/angular-frontend-best-practices.instructions.md` for all Angular code.
+## Code Generation Checklist
 
-````
+1. Follow `.github/instructions/angular-frontend-best-practices.instructions.md`
+2. Use signals for all component state
+3. Add new files to correct folder (`core/`, `features/`, `shared/`)
+4. Call out any game-rule assumptions if uncertain

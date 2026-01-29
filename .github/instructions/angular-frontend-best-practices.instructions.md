@@ -239,9 +239,22 @@ console.log(doubled()); // 100
 Import tokens and mixins in components that need them:
 
 ```scss
-@use 'styles/variables' as *;
-@use 'styles/mixins' as *;
+@use '../../../styles/variables' as vars;
+@use '../../../styles/mixins' as mixins;
+
+// Usage
+.element {
+  padding: vars.$spacing-md;
+  color: vars.$text-primary;
+  @include mixins.md { padding: vars.$spacing-lg; }
+}
 ```
+
+**Key tokens** (see `_variables.scss`):
+- Spacing: `$spacing-xs` (4px) → `$spacing-xxl` (48px)
+- Colors: `$primary-color`, `$accent-color`, `$success-color`, `$warn-color`
+- Borders: `$border-radius-sm/md/lg`
+- Transitions: `$transition-fast/normal/slow`
 
 ### Mobile-First Breakpoints
 
