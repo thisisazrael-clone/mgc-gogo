@@ -12,5 +12,4 @@ export interface Lobby {
 
 export interface LobbyState {
   currentLobby: Lobby | null;
-  opponentNameHistory: string[];
 }

@@ -68,15 +68,9 @@
               [value]="opponentName()"
               (input)="onInputChange($any($event.target).value)"
               (keydown.enter)="addOpponent()"
-              [matAutocomplete]="auto"
               placeholder="Enter opponent name"
               [attr.aria-label]="'Enter opponent name for match ' + currentMatchNumber()"
             />
-            <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onAutocompleteSelected($event.option.value)">
-              @for (suggestion of suggestions(); track suggestion) {
-                <mat-option [value]="suggestion">{{ suggestion }}</mat-option>
-              }
-            </mat-autocomplete>
           </mat-form-field>
           
           <button

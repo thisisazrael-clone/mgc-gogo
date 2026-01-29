@@ -27,7 +27,7 @@ See [prediction.util.ts](frontend/src/app/core/utils/prediction.util.ts) for the
 frontend/src/app/
 ├── core/
 │   ├── models/      # Lobby, Opponent interfaces
-│   ├── services/    # StorageService (signal-based state), AutocompleteService
+│   ├── services/    # StorageService (signal-based state)
 │   └── utils/       # prediction.util.ts (pure functions)
 ├── features/
 │   ├── tracker/     # Main opponent recording UI

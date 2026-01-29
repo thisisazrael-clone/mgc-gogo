@@ -3,14 +3,12 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
 import { StorageService } from '../../core/services/storage.service';
-import { AutocompleteService } from '../../core/services/autocomplete.service';
 import { predictOpponent } from '../../core/utils/prediction.util';
 import { MatchResult } from '../../core/models/opponent.model';
 import { 
@@ -26,7 +24,6 @@ import {
     FormsModule,
     MatFormFieldModule,
     MatInputModule,
-    MatAutocompleteModule,
     MatCardModule,
     MatButtonModule,
     MatIconModule,
@@ -38,14 +35,12 @@ import {
 })
 export class TrackerComponent {
   private readonly storageService = inject(StorageService);
-  private readonly autocompleteService = inject(AutocompleteService);
   private readonly dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
 
   protected readonly opponentName = signal<string>('');
   protected readonly pendingElimination = signal<string | null>(null);
   protected readonly lobby = this.storageService.getLobbySignal();
-  protected readonly suggestions = this.autocompleteService.suggestions;
   
   protected readonly currentMatchNumber = computed(() => {
     const currentLobby = this.lobby().currentLobby;
@@ -134,12 +129,6 @@ export class TrackerComponent {
 
   onInputChange(value: string): void {
     this.opponentName.set(value);
-    this.autocompleteService.setFilter(value);
-  }
-
-  onAutocompleteSelected(name: string): void {
-    this.opponentName.set(name);
-    this.autocompleteService.clearFilter();
   }
 
   addOpponent(): void {
@@ -168,7 +157,6 @@ export class TrackerComponent {
           }
           
           this.opponentName.set('');
-          this.autocompleteService.clearFilter();
         }
       });
     }

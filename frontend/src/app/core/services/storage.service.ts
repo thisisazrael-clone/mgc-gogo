@@ -31,10 +31,6 @@ export class StorageService {
     return this.state().currentLobby;
   }
 
-  getOpponentNameHistory() {
-    return this.state().opponentNameHistory;
-  }
-
   getLobbySignal() {
     return this.state;
   }
@@ -92,21 +88,10 @@ export class StorageService {
       matchHistory: [...lobby.matchHistory, opponent.id]
     };
 
-    // Add to name history if not already present
-    const nameHistory = this.state().opponentNameHistory;
-    const nameLower = name.toLowerCase().trim();
-    if (!nameHistory.some(n => n.toLowerCase() === nameLower)) {
-      this.state.update(state => ({
-        ...state,
-        currentLobby: updatedLobby,
-        opponentNameHistory: [...nameHistory, name.trim()]
-      }));
-    } else {
-      this.state.update(state => ({
-        ...state,
-        currentLobby: updatedLobby
-      }));
-    }
+    this.state.update(state => ({
+      ...state,
+      currentLobby: updatedLobby
+    }));
 
     this.saveState();
   }
@@ -300,8 +285,7 @@ export class StorageService {
     }
 
     return {
-      currentLobby: null,
-      opponentNameHistory: []
+      currentLobby: null
     };
   }
 
