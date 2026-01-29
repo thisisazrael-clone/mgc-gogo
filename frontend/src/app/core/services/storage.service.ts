@@ -54,7 +54,8 @@ export class StorageService {
       playerName: playerName.trim(),
       opponents: [],
       currentMatch: 1,
-      isComplete: false
+      isComplete: false,
+      matchHistory: []
     };
 
     this.state.update(state => ({
@@ -87,7 +88,8 @@ export class StorageService {
       ...lobby,
       opponents: [...lobby.opponents, opponent],
       currentMatch: lobby.opponents.length + 1,
-      isComplete: lobby.opponents.length + 1 === 7
+      isComplete: lobby.opponents.length + 1 === 7,
+      matchHistory: [...lobby.matchHistory, opponent.id]
     };
 
     // Add to name history if not already present
@@ -124,6 +126,23 @@ export class StorageService {
       currentLobby: {
         ...lobby,
         opponents: updatedOpponents
+      }
+    }));
+
+    this.saveState();
+  }
+
+  recordMatchOpponent(opponentId: string): void {
+    const lobby = this.state().currentLobby;
+    if (!lobby) {
+      return;
+    }
+
+    this.state.update(state => ({
+      ...state,
+      currentLobby: {
+        ...lobby,
+        matchHistory: [...lobby.matchHistory, opponentId]
       }
     }));
 
@@ -269,6 +288,10 @@ export class StorageService {
               timestamp: new Date(result.timestamp)
             }))
           }));
+          // Initialize matchHistory for migrated old lobbies
+          if (!parsed.currentLobby.matchHistory) {
+            parsed.currentLobby.matchHistory = [];
+          }
         }
         return parsed;
       }

@@ -7,6 +7,7 @@ export interface Lobby {
   opponents: Opponent[];
   currentMatch: number;
   isComplete: boolean;
+  matchHistory: string[]; // Array of opponent IDs faced in each match
 }
 
 export interface LobbyState {

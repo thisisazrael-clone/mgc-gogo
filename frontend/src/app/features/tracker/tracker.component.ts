@@ -88,12 +88,18 @@ export class TrackerComponent {
   protected readonly predictedOpponent = computed(() => {
     const matchNum = this.currentMatchNumber();
     const opps = this.opponents();
+    const currentLobby = this.lobby().currentLobby;
     
-    if (matchNum <= 7 || opps.length < 7) {
+    if (matchNum <= 7 || opps.length < 7 || !currentLobby) {
       return null;
     }
     
-    return predictOpponent(matchNum, opps);
+    // Get last opponent ID from match history for proper circular rotation
+    const lastOpponentId = currentLobby.matchHistory.length > 0 
+      ? currentLobby.matchHistory[currentLobby.matchHistory.length - 1] 
+      : undefined;
+    
+    return predictOpponent(matchNum, opps, lastOpponentId);
   });
 
   protected readonly canAddOpponent = computed(() => {
@@ -171,10 +177,16 @@ export class TrackerComponent {
   nextMatch(): void {
     const matchNum = this.currentMatchNumber();
     const opps = this.opponents();
+    const currentLobby = this.lobby().currentLobby;
     
     // After match 7, open fight dialog for predicted opponent
-    if (matchNum >= 7 && opps.length === 7) {
-      const predicted = predictOpponent(matchNum, opps);
+    if (matchNum >= 7 && opps.length === 7 && currentLobby) {
+      // Get last opponent ID from match history for proper circular rotation
+      const lastOpponentId = currentLobby.matchHistory.length > 0 
+        ? currentLobby.matchHistory[currentLobby.matchHistory.length - 1] 
+        : undefined;
+      
+      const predicted = predictOpponent(matchNum, opps, lastOpponentId);
       if (predicted) {
         this.openFightDialog(predicted.name, predicted.matchResults || []).then(result => {
           if (result) {
@@ -183,10 +195,12 @@ export class TrackerComponent {
             
             // Record elimination if checked
             if (result.eliminated) {
-              const currentLobby = this.lobby().currentLobby;
-              const playerId = currentLobby?.id; // Using lobby ID as player ID
+              const playerId = currentLobby.id; // Using lobby ID as player ID
               this.storageService.recordElimination(predicted.id, playerId || null, matchNum);
             }
+            
+            // Record the opponent faced in this match
+            this.storageService.recordMatchOpponent(predicted.id);
             
             // Advance to next match
             this.storageService.advanceMatch();
