@@ -1,4 +1,4 @@
-import { Component, inject, ChangeDetectionStrategy, signal } from '@angular/core';
+import { Component, inject, ChangeDetectionStrategy, signal, OnInit, model } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -283,15 +283,15 @@ export interface FightAnimationDialogResult {
   `],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class FightAnimationDialogComponent {
+export class FightAnimationDialogComponent implements OnInit {
   protected readonly data = inject<FightAnimationDialogData>(MAT_DIALOG_DATA);
   private readonly dialogRef = inject(MatDialogRef<FightAnimationDialogComponent>);
 
-  protected eliminated = false;
+  protected eliminated = model(false);
   protected readonly playerAttacking = signal(false);
   protected readonly opponentAttacking = signal(false);
 
-  constructor() {
+  ngOnInit(): void {
     // Trigger simple attack animation sequence on load
     this.playFightSequence();
   }
@@ -310,7 +310,7 @@ export class FightAnimationDialogComponent {
   onOutcome(outcome: 'win' | 'loss'): void {
     const result: FightAnimationDialogResult = {
       outcome,
-      eliminated: this.eliminated
+      eliminated: this.eliminated()
     };
     this.dialogRef.close(result);
   }

@@ -1,5 +1,7 @@
 # Copilot Instructions — Magic Chess: Go Go Enemy Tracker
 
+**Last Updated:** 2026-01-29
+
 Single-page **frontend-only** Angular 21 app to track match opponents in an 8‑player *Magic Chess: Go Go* lobby and predict upcoming opponents.
 
 ## Goal
@@ -34,9 +36,9 @@ npm run watch            # build in watch mode
 
 ## Architecture Patterns
 
-### Signal-Based State (Angular 20+ Signals)
+### Signal-Based State (Angular 21 Signals)
 
-All state management uses Angular signals — **no Zone.js, no RxJS for local state**.
+All state management uses Angular signals — **no Zone.js, no RxJS for local state** (exception: Angular Material Dialog returns Observables for `afterClosed()` events, which is acceptable).
 
 - **StorageService**: Single signal-based source of truth (`signal<LobbyState>`)
 - **Components**: Use `computed()` for derived state, `inject()` for DI
@@ -69,18 +71,6 @@ protected readonly predictedOpponent = computed(() => {
    - Import `StorageService` signal
    - Use `computed()` for derived state
    - Call service methods for mutations
-
-### Known Anti-Pattern to Fix
-
-⚠️ **AutocompleteService** creates its own `StorageService` instance instead of injecting it:
-```ts
-// WRONG (current implementation)
-private readonly storageService = new StorageService();
-
-// RIGHT (should be)
-private readonly storageService = inject(StorageService);
-```
-This breaks signal reactivity. Always use `inject()` for DI, never `new` for services.
 
 ### LocalStorage Persistence
 
@@ -163,11 +153,32 @@ frontend/src/app/
 Key patterns in this codebase:
 
 - **Standalone components** (`standalone: true`) everywhere
-- **Signal APIs**: `signal()`, `computed()`, `inject()`
+- **Signal APIs**: `signal()`, `computed()`, `inject()`, `model()`, `input()`, `output()`
 - **Zoneless change detection** (`provideZonelessChangeDetection()`)
-- **OnPush change detection** for all components
+- **OnPush change detection** for all components (best practice even in zoneless mode)
 - **New template syntax**: `@if`, `@for`, `@switch` (not `*ngIf`/`*ngFor`)
 - **Angular Material 21** for UI components
+
+### Component API Examples
+
+```ts
+// Input signals
+name = input<string>();                    // Optional
+userId = input.required<string>();         // Required
+count = input(0);                          // With default
+disabled = input(false, { transform: booleanAttribute }); // With transform
+
+// Output signals
+itemSelected = output<string>();
+saveClicked = output({ alias: 'save' });
+
+// Model signals (two-way binding)
+checked = model(false);                    // Works with [(ngModel)]
+value = model<string>('');
+
+// Usage
+itemSelected.emit('value');
+```
 
 Example component structure ([tracker.component.ts](frontend/src/app/features/tracker/tracker.component.ts)):
 ```ts

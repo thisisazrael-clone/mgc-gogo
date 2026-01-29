@@ -1,6 +1,7 @@
 ---
-description: 'Angular v20 Frontend Development Best Practices'
+description: 'Angular v21 Frontend Development Best Practices'
 applyTo: '**/*.ts, **/*.html, **/*.scss'
+lastUpdated: '2026-01-29'
 ---
 
 ## Naming Conventions
@@ -14,7 +15,7 @@ applyTo: '**/*.ts, **/*.html, **/*.scss'
 ## Project Structure
 
 - Organize by feature modules, not by type
-- Use standalone components as the default (Angular 20 standard)
+- Use standalone components as the default (Angular 21 standard)
 - Keep shared components, directives, and pipes in a `shared/` folder
 - Place core services and guards in a `core/` folder
 - Use lazy loading for feature routes
@@ -23,10 +24,60 @@ applyTo: '**/*.ts, **/*.html, **/*.scss'
 
 - Prefer standalone components over NgModule-based components
 - **Every component must be `standalone: true`**
-- **Use `ChangeDetectionStrategy.OnPush` for all components**
+- **Use `ChangeDetectionStrategy.OnPush` for all components** (best practice for explicit change detection, even in zoneless mode)
 - Keep components small and focused on a single responsibility
-- Use `input()` and `output()` signal-based APIs instead of `@Input()` and `@Output()` decorators
+- Use `input()`, `output()`, and `model()` signal-based APIs instead of `@Input()`, `@Output()`, and two-way bindings with `@Input()`/`@Output()`
 - Avoid logic in templates; move complex expressions to component methods or computed signals
+
+### Signal-Based Component APIs
+
+#### Input Signals
+
+```ts
+// Optional input
+name = input<string>();
+
+// Required input
+userId = input.required<string>();
+
+// With default value
+count = input(0);
+
+// With alias
+userId = input('', { alias: 'user-id' });
+
+// With transform for type coercion
+disabled = input(false, { transform: booleanAttribute });
+enabled = input(true, { transform: (value: unknown) => value !== false });
+```
+
+#### Output Signals
+
+```ts
+// Type-safe output
+itemSelected = output<string>();
+
+// With alias
+saveClicked = output({ alias: 'save' });
+
+// Usage in template
+<button (click)="itemSelected.emit('value')">Select</button>
+```
+
+#### Model Signals (Two-Way Binding)
+
+```ts
+// For two-way binding with [(ngModel)] or custom two-way bindings
+checked = model(false);
+value = model<string>('');
+
+// With alias
+isOpen = model(false, { alias: 'open' });
+
+// In template - works seamlessly with [(ngModel)]
+<input [(ngModel)]="value" />
+<mat-checkbox [(ngModel)]="checked" />
+```
 
 ### Cleanup Pattern
 
@@ -36,16 +87,22 @@ Use `DestroyRef` for cleanup instead of `ngOnDestroy`:
 readonly items = signal<string[]>([]);
 private readonly destroyRef = inject(DestroyRef);
 
-constructor() {
-  **Use `@if`, `@for`, `@switch` control flow syntax** (never use `*ngIf`, `*ngFor`, `*ngSwitch`)
+ngOnInit(): void {
+  someObservable$
+    .pipe(takeUntilDestroyed(this.destroyRef))
+    .subscribe(data => this.items.set(data));
+}
+```
+## Templates
+
+- Use `@if`, `@for`, `@switch` control flow syntax (not `*ngIf`, `*ngFor`)
 - Always provide `track` expression in `@for` loops for performance
 - Use `@defer` for lazy loading heavy components
 - Avoid complex expressions in templates; use computed signals
 - Use `ng-container` to group elements without adding DOM nodes
 
 ### Control Flow Examples
-**Use signals (`signal()`, `computed()`, `effect()`) for reactive state**
-- **Prefer zoneless change detection** (no Zone.js) and signal-driven
+
 ```html
 @for (item of items(); track item; let i = $index) {
   <div>{{ i }}: {{ item }}</div>
@@ -61,21 +118,54 @@ constructor() {
   @default { <p>Unknown mode</p> }
 }
 ```
+
 ## Signals and State Management
 
-- Use signals (`signal()`, `computed()`, `effect()`) for reactive state
+- **Use signals (`signal()`, `computed()`, `effect()`) for reactive state**
+- **Use `resource()` for async data loading** (Angular 21+)
+- **Use `linkedSignal()` for derived signals that can be manually overridden** (Angular 21+)
 - Prefer `computed()` for derived state instead of manual calculations
 - Use `effect()` sparingly; prefer declarative patterns
+  - ❌ Don't use for deriving state (use `computed()`)
+  - ❌ Don't use for template rendering (use `computed()`)
+  - ✅ Do use for side effects (logging, analytics, DOM manipulation)
+  - ✅ Do use for syncing with external systems (localStorage, WebSocket)
 - Consider NgRx Signal Store for complex state management
 - Avoid mixing signals with BehaviorSubjects in the same component
+- **Prefer zoneless change detection** (no Zone.js) with signal-driven architecture
 
-## Templates
+### Resource API (Angular 21)
 
-- Use `@if`, `@for`, `@switch` control flow syntax (not `*ngIf`, `*ngFor`)
-- Always provide `track` expression in `@for` loops for performance
-- Use `@defer` for lazy loading heavy components
-- Avoid complex expressions in templates; use computed signals
-- Use `ng-container` to group elements without adding DOM nodes
+```ts
+// Async data loading with built-in loading/error states
+users = resource({
+  loader: () => this.http.get<User[]>('/api/users')
+});
+
+// Template usage
+@if (users.isLoading()) { <spinner /> }
+@if (users.error()) { <error-message /> }
+@if (users.value(); as userList) {
+  @for (user of userList; track user.id) {
+    <user-card [user]="user" />
+  }
+}
+```
+
+### LinkedSignal API (Angular 21)
+
+```ts
+// Derived signal with writable behavior
+source = signal(10);
+doubled = linkedSignal(() => this.source() * 2);
+
+// Can be computed from source
+console.log(doubled()); // 20
+
+// Or manually overridden
+doubled.set(100);
+console.log(doubled()); // 100
+```
 
 ## Services and Dependency Injection
 
@@ -128,7 +218,7 @@ constructor() {
 
 ## Testing
 
-- Write unit tests for components, services, and pipes
+- Write unit tests for components, services, and pipes using **Vitest**
 - Use `TestBed` with standalone component testing utilities
 - Mock HTTP calls with `HttpTestingController`
 - Use `ComponentFixture` for component interaction tests

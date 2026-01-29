@@ -1,11 +1,11 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { Injectable, computed, signal, inject } from '@angular/core';
 import { StorageService } from './storage.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AutocompleteService {
-  private readonly storageService = new StorageService();
+  private readonly storageService = inject(StorageService);
   private readonly filterText = signal<string>('');
 
   readonly suggestions = computed(() => {
